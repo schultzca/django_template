@@ -13,9 +13,12 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.urls import path
-from helloworld import views
+from django.urls import path, include
+from rule_engine import views
 
 urlpatterns = [
-    path("", views.home),
+    path("", views.SearchView.as_view(), name="Search"),
+    path("ajax/indices/", views.indices),
+    path("ajax/search/", views.search),
+    path("api/", include('rule_engine.api.urls'))
 ]

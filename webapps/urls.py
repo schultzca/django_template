@@ -18,7 +18,7 @@ from django.urls import path, include
 from django.contrib.auth.views import LoginView, LogoutView
 
 urlpatterns = [
-    path('', include("helloworld.urls")),
-    path('admin/', admin.site.urls),
-    path('login/', LoginView.as_view()),
+    path('', include("rule_engine.urls")),
+    path('admin/', admin.site.urls, name="Admin"),
+    path('login/', LoginView.as_view(), name="Login"),
 ]

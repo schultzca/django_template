@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    <!--Redirect user to login page if they are not authenticated.-->
+    {% if not user.is_authenticated %}
+        <meta http-equiv="REFRESH" content="0;url={% url "Login" %}" xmlns="http://www.w3.org/1999/html"
+              xmlns="http://www.w3.org/1999/html">
+    {% endif %}
+
+    <div class="row">
+        <div class="input-field col s12 m6">
+            <select class="elastic-instance">
+                <option value="" disabled selected>Choose your option</option>
+                {% for instance in instances %}
+                    <option value="{{ instance.host }}">{{ instance.host }}</option>
+                {% endfor %}
+            </select>
+            <label>Elasticsearch Instance</label>
+        </div>
+
+        <div class="input-field col s12 m6">
+            <select class="elastic-index">
+                <option value="" disabled selected>Choose your option</option>
+            </select>
+            <label>Elasticsearch Index</label>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="input-field col s12 m6">
+            <select class="tag-set">
+                <option value="" disabled selected>Choose your option</option>
+                {% for tagset in tagsets %}
+                    <option value="{{ tagset.id }}">{{ tagset.name }}</option>
+                {% endfor %}
+            </select>
+            <label>Tag Set</label>
+        </div>
+
+        <div class="input-field col s12 m6">
+            <select class="tag-list">
+                <option value="" disabled selected>Choose your option</option>
+            </select>
+            <label>Tag</label>
+        </div>
+    </div>
+
+    <div class="row">
+        <form class="col s12">
+            <div class="row">
+                <div class="input-field col s10">
+                    <input id="query_input" type="text">
+                    <label for="query_input">Query String</label>
+                </div>
+                <div class="input-field col s2">
+                    <a class="btn-small" onclick="searchIndex('query_input')"><i class="material-icons">search</i></a>
+                    <a class="btn-small"><i class="material-icons">add</i></a>
+                </div>
+            </div>
+        </form>
+        <div class="col s12">
+            <ul id="query-list" class="collection">
+            </ul>
+        </div>
+    </div>
+
+
+    <div id="data-table" class="row">
+        <table id="example" class="display" width="100%"></table>
+    </div>
+
+{% endblock %}
+
+{% block javascript %}
+
+    <script>
+        $(document).ready(function () {
+            $('select').formSelect();
+            $('.collapsible').collapsible();
+        });
+    </script>
+
+    <script>
+        $('.elastic-instance').change(function () {
+            let instance = $('.elastic-instance option:selected').val();
+            getElasticIndices(instance);
+        });
+
+        function getElasticIndices(instance) {
+            $.ajax({
+                url: '/ajax/indices/',
+                type: 'GET',
+                data: {
+                    'instance': instance
+                },
+                dataType: 'json',
+                success: function (data) {
+                    let indices = {};
+                    for (index_name in data.indices) {
+                        indices[index_name] = index_name;
+                    }
+                    updateSelect($('.elastic-index'), indices);
+                }
+            });
+        }
+
+        $('.tag-set').change(function () {
+           let tagSetID = $('.tag-set option:selected').val();
+           getTags(tagSetID);
+        });
+
+        function getTags(tagSetID) {
+            $.ajax({
+                url: '/api/tags',
+                type: 'GET',
+                data: {
+                    'tagset_id': tagSetID
+                },
+                dataType: 'json',
+                success: function (data) {
+                    let tags = {}
+                    data.forEach(item => tags[item.id] = item.name);
+                    updateSelect($('.tag-list'), tags);
+                    getQueries($('.tag-list option:selected').val());
+                }
+            });
+        }
+
+        // Helper method to update select elements options.
+        function updateSelect(selector, options, duplicate_val) {
+            selector.find('option:not(:first)').remove();
+            $.each(options, function(val, text) {
+                selector.append(
+                    $('<option class="left"></option>').val(val).html(text)
+                )
+            });
+            $('select').formSelect()
+        }
+
+        $('.tag-list').change(function () {
+           let tagID = $('.tag-list option:selected').val();
+           getQueries(tagID);
+        });
+
+        function getQueries(tagID) {
+            $.ajax({
+                url: '/api/queries',
+                type: 'GET',
+                data: {
+                    'tag_id': tagID
+                },
+                dataType: 'json',
+                success: function (data) {
+                    querySelector = $('#query-list')
+                    querySelector.find("li").remove();
+                    data.forEach(item => {
+                        querySelector.append(
+                            '<li class="collection-item">' +
+                                '<a class="btn" onclick="searchIndex(\'query_' + item.id + '\')"><i class="material-icons">search</i></a>' +
+                                '<a class="btn"><i class="material-icons">delete</i></a>' +
+                                '<span id="query_' + item.id + '">' + item.query + '</span>' +
+                            '</li>'
+                        )
+                    });
+                }
+            });
+        }
+
+        function searchIndex(text_id) {
+            let textSelector = $('#' + text_id);
+            let query_string = ((textSelector.val() != "") ? textSelector.val() : textSelector.text());
+            $.ajax({
+                url: '/ajax/search/',
+                type: 'GET',
+                data: {
+                   'instance': $('.elastic-instance').val(),
+                   'index': $('.elastic-index').val(),
+                   'query_string': query_string
+                },
+                dataType: 'json',
+                success: function (data) {
+                    constructTable(data);
+                }
+            });
+        }
+
+        function constructTable(data) {
+
+            let setHeader = true;
+            let tableColumns = [];
+            let tableRows = [];
+
+            data.hits.hits.forEach(hit => {
+                if (setHeader) {
+                    Object.keys(hit._source).forEach(key => tableColumns.push({"title": key}));
+                    setHeader = false;
+                }
+                tableRows.push(Object.values(hit._source));
+            });
+
+            let tableSelector = $('#example');
+
+            // Clear and destroy existing DataTable.
+            if ($.fn.DataTable.isDataTable('#example')) {
+                tableSelector.DataTable().clear().destroy();
+            }
+
+            if (tableRows.length != 0) {
+                // Create new table from data.
+                tableSelector.DataTable({
+                    columns: tableColumns,
+                    data: tableRows
+                })
+            }
+        }
+    </script>
+
+{% endblock %}
