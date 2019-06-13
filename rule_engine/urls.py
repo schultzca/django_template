@@ -20,5 +20,7 @@ urlpatterns = [
     path("", views.SearchView.as_view(), name="Search"),
     path("ajax/indices/", views.indices),
     path("ajax/search/", views.search),
+    path("ajax/create_query/", views.create_query),
+    path("ajax/delete_query/", views.delete_query),
     path("api/", include('rule_engine.api.urls'))
 ]

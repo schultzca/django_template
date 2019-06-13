@@ -25,11 +25,11 @@ class TagViewSet(viewsets.ModelViewSet):
     serializer_class = TagSerializer
 
     def get_queryset(self):
-        tagset_id = self.request.GET.get("tagset_id", None)
-        if tagset_id is None:
-            return self.queryset
+        tagset_id = self.request.GET.get("tagset_id", "")
+        if not tagset_id:
+            return models.Tag.objects.none()
         return models.Tag.objects.filter(
-            tagset=models.TagSet.objects.get(id=int(tagset_id)))
+            tagset=models.TagSet.objects.get(id=tagset_id))
 
 
 class QuerySerializer(serializers.ModelSerializer):
@@ -43,11 +43,10 @@ class QueryViewSet(viewsets.ModelViewSet):
     serializer_class = QuerySerializer
 
     def get_queryset(self):
-        tag_id = self.request.GET.get("tag_id", None)
-        print(tag_id)
-        if tag_id is None:
-            return self.queryset
-        return models.Query.objects.filter(tag=models.Tag.objects.get(id=int(tag_id)))
+        tag_id = self.request.GET.get("tag_id", "")
+        if not tag_id:
+            return models.Query.objects.none()
+        return models.Query.objects.filter(tag=models.Tag.objects.get(id=tag_id))
 
 
 router = routers.DefaultRouter()

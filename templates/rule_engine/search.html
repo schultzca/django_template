@@ -55,7 +55,7 @@
                 </div>
                 <div class="input-field col s2">
                     <a class="btn-small" onclick="searchIndex('query_input')"><i class="material-icons">search</i></a>
-                    <a class="btn-small"><i class="material-icons">add</i></a>
+                    <a class="btn-small" onclick="createQuery('query_input')"><i class="material-icons">add</i></a>
                 </div>
             </div>
         </form>
@@ -106,11 +106,11 @@
         }
 
         $('.tag-set').change(function () {
-           let tagSetID = $('.tag-set option:selected').val();
-           getTags(tagSetID);
+            populateTags();
         });
 
-        function getTags(tagSetID) {
+        function populateTags() {
+            let tagSetID = $('.tag-set option:selected').val();
             $.ajax({
                 url: '/api/tags',
                 type: 'GET',
@@ -122,8 +122,9 @@
                     let tags = {}
                     data.forEach(item => tags[item.id] = item.name);
                     updateSelect($('.tag-list'), tags);
-                    getQueries($('.tag-list option:selected').val());
                 }
+            }).always(function () {
+                populateQueries();
             });
         }
 
@@ -139,11 +140,11 @@
         }
 
         $('.tag-list').change(function () {
-           let tagID = $('.tag-list option:selected').val();
-           getQueries(tagID);
+            populateQueries();
         });
 
-        function getQueries(tagID) {
+        function populateQueries() {
+            let tagID = $('.tag-list option:selected').val();
             $.ajax({
                 url: '/api/queries',
                 type: 'GET',
@@ -155,10 +156,11 @@
                     querySelector = $('#query-list')
                     querySelector.find("li").remove();
                     data.forEach(item => {
+                        console.log(item.read_only);
                         querySelector.append(
                             '<li class="collection-item">' +
                                 '<a class="btn" onclick="searchIndex(\'query_' + item.id + '\')"><i class="material-icons">search</i></a>' +
-                                '<a class="btn"><i class="material-icons">delete</i></a>' +
+                                '<a class="btn" onclick="deleteQuery(\'' + item.id + '\')"><i class="material-icons">delete</i></a>' +
                                 '<span id="query_' + item.id + '">' + item.query + '</span>' +
                             '</li>'
                         )
@@ -167,16 +169,47 @@
             });
         }
 
+        function createQuery(text_id) {
+            let textSelector = $('#' + text_id);
+            let tagID = $('.tag-list option:selected').val();
+            let queryString = ((textSelector.val() != "") ? textSelector.val() : textSelector.text());
+            $.ajax({
+                url: '/ajax/create_query/',
+                type: 'POST',
+                data: {
+                    'tag_id': tagID,
+                    'query_string': queryString
+                },
+                dataType: 'json'
+            }).always(function () {
+                populateQueries();
+            });
+        }
+
+        function deleteQuery(query_id) {
+            $.ajax({
+                url: '/ajax/delete_query/',
+                type: 'POST',
+                data: {
+                    'query_id': query_id
+                },
+                dataType: 'json'
+            }).always(function () {
+                populateQueries();
+            });
+
+        }
+
         function searchIndex(text_id) {
             let textSelector = $('#' + text_id);
-            let query_string = ((textSelector.val() != "") ? textSelector.val() : textSelector.text());
+            let queryString = ((textSelector.val() != "") ? textSelector.val() : textSelector.text());
             $.ajax({
                 url: '/ajax/search/',
                 type: 'GET',
                 data: {
                    'instance': $('.elastic-instance').val(),
                    'index': $('.elastic-index').val(),
-                   'query_string': query_string
+                   'query_string': queryString
                 },
                 dataType: 'json',
                 success: function (data) {

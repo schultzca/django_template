@@ -1,16 +1,12 @@
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
-from django.views.generic import View, TemplateView
+from django.views.generic import TemplateView
+from django.views.decorators.csrf import csrf_exempt
 
 from elasticsearch import Elasticsearch
 from elasticsearch_dsl import Search
 
-from rule_engine.models import ElasticInstance, TagSet
-
-
-class HomeView(TemplateView):
-
-    template_name = "rule_engine/home.html"
+from rule_engine.models import ElasticInstance, TagSet, Tag, Query
 
 
 class SearchView(TemplateView):
@@ -46,3 +42,22 @@ def search(request):
 
     return JsonResponse(results.to_dict())
 
+
+@csrf_exempt
+def create_query(request):
+    Query(
+        tag=Tag.objects.get(id=int(request.POST["tag_id"])),
+        query=request.POST["query_string"],
+        created_by=request.user
+    ).save()
+    return HttpResponse(status=201)
+
+
+@csrf_exempt
+def delete_query(request):
+    query = Query.objects.get(id=request.POST["query_id"])
+    if query.read_only:
+        return HttpResponse(status=403)
+    else:
+        query.delete()
+    return HttpResponse(status=200)

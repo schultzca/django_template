@@ -45,6 +45,10 @@ class Tag(TimeStampedMixin):
 class Query(TimeStampedMixin):
     query = models.CharField(null=False, blank=False, max_length=1500)
     tag = models.ForeignKey(Tag, on_delete=models.PROTECT)
+    read_only = models.BooleanField(default=False, blank=False, null=False)
+
+    class Meta:
+        unique_together = [['tag', 'query']]
 
     def __str__(self):
         return self.query
