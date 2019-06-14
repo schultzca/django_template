@@ -9627,10 +9627,10 @@ module.exports = ZStream;
 			var api = this.api( true );
 		
 			if ( iColumn === null || iColumn === undefined ) {
-				api.search( sInput, bRegex, bSmart, bCaseInsensitive );
+				api.query_creation( sInput, bRegex, bSmart, bCaseInsensitive );
 			}
 			else {
-				api.column( iColumn ).search( sInput, bRegex, bSmart, bCaseInsensitive );
+				api.column( iColumn ).query_creation( sInput, bRegex, bSmart, bCaseInsensitive );
 			}
 		
 			api.draw();
@@ -13742,7 +13742,7 @@ module.exports = ZStream;
 	function _fnSearchToHung ( obj )
 	{
 		return {
-			sSearch:          obj.search,
+			sSearch:          obj.query_creation,
 			bSmart:           obj.smart,
 			bRegex:           obj.regex,
 			bCaseInsensitive: obj.caseInsensitive
@@ -15554,8 +15554,8 @@ module.exports = ZStream;
 			}
 	
 			// Search
-			if ( s.search !== undefined ) {
-				$.extend( settings.oPreviousSearch, _fnSearchToHung( s.search ) );
+			if ( s.query_creation !== undefined ) {
+				$.extend( settings.oPreviousSearch, _fnSearchToHung( s.query_creation ) );
 			}
 	
 			// Columns
@@ -16962,7 +16962,7 @@ module.exports = ZStream;
 			displayMaster = settings.aiDisplayMaster;
 	
 		var
-			search = opts.search,  // none, applied, removed
+			search = opts.query_creation,  // none, applied, removed
 			order  = opts.order,   // applied, current, index (original - compatibility with 1.9)
 			page   = opts.page;    // all, current
 	

@@ -31,7 +31,7 @@ class TagSet(TimeStampedMixin):
     name = models.CharField(null=False, blank=False, max_length=200)
 
     def __str__(self):
-        return self.name
+        return f"{self.name} - {self.created_by}"
 
 
 class Tag(TimeStampedMixin):
@@ -39,7 +39,7 @@ class Tag(TimeStampedMixin):
     tagset = models.ForeignKey(TagSet, on_delete=models.PROTECT)
 
     def __str__(self):
-        return self.name
+        return f"{self.tagset.name} - {self.name} - {self.created_by}"
 
 
 class Query(TimeStampedMixin):
@@ -51,18 +51,7 @@ class Query(TimeStampedMixin):
         unique_together = [['tag', 'query']]
 
     def __str__(self):
-        return self.query
+        return f"{self.tag.name} - {self.created_by.username} - {self.query}"
 
-
-class QueryOperation(TimeStampedMixin):
-    query = models.ForeignKey(Query, on_delete=models.PROTECT)
-    op = models.CharField(
-        max_length=20,
-        choices=([
-            ("CREATE", "CREATE"),
-            ("DELETE", "DELETE")
-        ]),
-        default="CREATE"
-    )
 
 

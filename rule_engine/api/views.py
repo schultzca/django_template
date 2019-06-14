@@ -1,3 +1,4 @@
+from django.db.models import Q
 from rest_framework import routers, serializers, viewsets
 
 import rule_engine.models as models
