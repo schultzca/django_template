@@ -54,7 +54,7 @@
                     <label for="query_input">Query String</label>
                 </div>
                 <div class="input-field col s2">
-                    <a class="btn-small" onclick="searchIndex('query_input')"><i class="material-icons">search</i></a>
+                    <a class="btn-small" onclick="searchButtonCallback('query_input')"><i class="material-icons">search</i></a>
                     <a class="btn-small" onclick="createQuery('query_input')"><i class="material-icons">add</i></a>
                 </div>
             </div>
@@ -166,7 +166,7 @@
                         console.log(item.read_only);
                         querySelector.append(
                             '<li class="collection-item">' +
-                            '<a class="btn" onclick="searchIndex(\'query_' + item.id + '\')"><i class="material-icons">search</i></a>' +
+                            '<a class="btn" onclick="searchButtonCallback(\'query_' + item.id + '\')"><i class="material-icons">search</i></a>' +
                             '<a class="btn" onclick="deleteQuery(\'' + item.id + '\')"><i class="material-icons">delete</i></a>' +
                             '<span id="query_' + item.id + '">' + item.query + '</span>' +
                             '</li>'
@@ -206,13 +206,16 @@
             }).always(function () {
                 populateQueries();
             });
+        }
 
+        function searchButtonCallback(text_id) {
+            let textSelector = $('#' + text_id);
+            let queryString = ((textSelector.val() != "") ? textSelector.val() : textSelector.text());
+            searchIndex(queryString)
         }
 
         // Execute query against selected Elasticsearch instance and indexm, displaying results in datatable.
-        function searchIndex(text_id) {
-            let textSelector = $('#' + text_id);
-            let queryString = ((textSelector.val() != "") ? textSelector.val() : textSelector.text());
+        function searchIndex(queryString) {
             $.ajax({
                 url: '/ajax/search/',
                 type: 'GET',
@@ -252,12 +255,20 @@
             }
 
             if (tableRows.length != 0) {
+
                 // Create new table from data.
-                tableSelector.DataTable({
+                let table = tableSelector.DataTable({
                     columns: tableColumns,
                     data: tableRows,
                     dom: 'Bfrtip',
                     buttons: ['colvis']
+                });
+
+                // Double click event listener on cells.
+                tableSelector.find('tbody').on('dblclick', 'td', function () {
+                   let cell = table.cell(this);
+                   let query_string = `${table.column(cell.index().column).header().innerText}: ${cell.data()}`;
+                   searchIndex(query_string);
                 });
             }
         }
