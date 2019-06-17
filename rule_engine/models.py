@@ -41,13 +41,15 @@ class ElasticInstance(TimeStampedMixin):
 
 class TagSet(TimeStampedMixin):
     name = models.CharField(null=False, blank=False, max_length=200)
+    description = models.CharField(default="", max_length=200)
 
     def __str__(self):
         return f"{self.name} - {self.created_by}"
 
 
 class Tag(TimeStampedMixin):
-    name = models.CharField(null=False, blank=False, max_length=1000)
+    name = models.CharField(null=False, blank=False, max_length=200)
+    description = models.CharField(default="", max_length=200)
     tagset = models.ForeignKey(TagSet, on_delete=models.PROTECT)
 
     def __str__(self):
@@ -55,7 +57,7 @@ class Tag(TimeStampedMixin):
 
 
 class Query(TimeStampedMixin):
-    query = models.CharField(null=False, blank=False, max_length=1500)
+    query = models.CharField(null=False, blank=False, max_length=300)
     tag = models.ForeignKey(Tag, on_delete=models.PROTECT)
     read_only = models.BooleanField(default=False, blank=False, null=False)
 

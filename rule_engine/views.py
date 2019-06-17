@@ -88,6 +88,6 @@ def delete_query(request):
     query = Query.objects.get(id=request.POST["query_id"])
     if query.read_only:
         return HttpResponse(status=403)
-    elif query.created_by == request.user:
+    elif query.created_by == request.user or request.user.is_superuser:
         query.delete()
     return HttpResponse(status=200)

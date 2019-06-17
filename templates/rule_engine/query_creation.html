@@ -67,7 +67,12 @@
 
 
     <div id="data-table" class="row">
-        <table id="example" class="display" width="100%"></table>
+        <div class="row">
+            <h5 id="caption"></h5>
+        </div>
+        <div class="row">
+            <table id="example" class="display" width="100%"></table>
+        </div>
     </div>
 
 {% endblock %}
@@ -234,16 +239,23 @@
         // Helper method that handles initialization and updating datatable.
         function constructTable(data) {
 
-            let setHeader = true;
             let tableColumns = [];
             let tableRows = [];
 
             data.hits.hits.forEach(hit => {
-                if (setHeader) {
+                if (tableColumns.length == 0) {
+                    tableColumns.push({"title": "_score"});
                     Object.keys(hit._source).forEach(key => tableColumns.push({"title": key}));
-                    setHeader = false;
                 }
-                tableRows.push(Object.values(hit._source));
+                let row = [];
+                tableColumns.forEach(column => {
+                    if (column.title == "_score") {
+                        row.push(hit._score);
+                    } else {
+                        row.push(hit._source[column.title]);
+                    }
+                });
+                tableRows.push(row);
             });
 
             let tableSelector = $('#example');
@@ -252,16 +264,23 @@
             if ($.fn.dataTable.isDataTable('#example')) {
                 tableSelector.DataTable().clear().destroy();
                 tableSelector.empty();
+                $('#caption').text('');
             }
 
             if (tableRows.length != 0) {
+
+                $('#caption').text(`Hits: ${data.hits.total}`);
 
                 // Create new table from data.
                 let table = tableSelector.DataTable({
                     columns: tableColumns,
                     data: tableRows,
                     dom: 'Bfrtip',
-                    buttons: ['colvis']
+                    buttons: ['colvis'],
+                    deferRender: true,
+                    scrollY: "500px",
+                    scrollCollapse: true,
+                    scroller: true
                 });
 
                 // Double click event listener on cells.
