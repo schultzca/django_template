@@ -66,7 +66,7 @@ def search(request):
     query_string = request.GET.get("query_string", None)
 
     client = create_es_client(host)
-    results = Search(using=client, index=elastic_index).query("query_string", query=query_string).execute()
+    results = Search(using=client, index=elastic_index).query("query_string", query=query_string)[0:10000].execute()
 
     return JsonResponse(results.to_dict())
 
