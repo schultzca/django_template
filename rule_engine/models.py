@@ -57,7 +57,7 @@ class Tag(TimeStampedMixin):
 
 
 class Query(TimeStampedMixin):
-    query = models.CharField(null=False, blank=False, max_length=300)
+    query = models.CharField(null=False, blank=False, max_length=1000)
     tag = models.ForeignKey(Tag, on_delete=models.PROTECT)
     read_only = models.BooleanField(default=False, blank=False, null=False)
 
