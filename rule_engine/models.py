@@ -22,9 +22,21 @@ class ElasticInstance(TimeStampedMixin):
     host = models.CharField(null=False, blank=False, max_length=200)
     port = models.IntegerField(default=9200, null=False, blank=False)
     description = models.CharField(null=False, blank=False, max_length=200)
+    username = models.CharField(default="", max_length=50)
+    password = models.CharField(default="", max_length=50)
+    cafile = models.CharField(default="", max_length=50)
 
     def __str__(self):
         return f"{self.host}:{self.port} - {self.description}"
+
+    def requires_auth(self):
+        return self.username or self.password
+
+    def requires_ssl(self):
+        return self.cafile
+
+    class Meta:
+        unique_together = [['host', 'port']]
 
 
 class TagSet(TimeStampedMixin):
