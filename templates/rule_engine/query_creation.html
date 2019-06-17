@@ -130,7 +130,7 @@
                 dataType: 'json',
                 success: function (data) {
                     let tags = [];
-                    data.forEach(item => tags.push({"value": item.id, "text": item.name.split("_").join(" - ")}));
+                    data.forEach(item => tags.push({"value": item.id, "text": item.name}));
                     updateSelect($('.tag-list'), tags);
                 }
             }).always(function () {
@@ -169,13 +169,22 @@
                     querySelector.find("li").remove();
                     data.forEach(item => {
                         console.log(item.read_only);
-                        querySelector.append(
-                            '<li class="collection-item">' +
-                            '<a class="btn" onclick="searchButtonCallback(\'query_' + item.id + '\')"><i class="material-icons">search</i></a>' +
-                            '<a class="btn" onclick="deleteQuery(\'' + item.id + '\')"><i class="material-icons">delete</i></a>' +
-                            '<span id="query_' + item.id + '">' + item.query + '</span>' +
-                            '</li>'
-                        )
+                        if (item.read_only){
+                            querySelector.append(
+                                '<li class="collection-item">' +
+                                '<a class="btn" onclick="searchButtonCallback(\'query_' + item.id + '\')"><i class="material-icons">search</i></a>' +
+                                '<span id="query_' + item.id + '">' + item.query + '</span>' +
+                                '</li>'
+                            )
+                        } else {
+                            querySelector.append(
+                                '<li class="collection-item">' +
+                                '<a class="btn" onclick="searchButtonCallback(\'query_' + item.id + '\')"><i class="material-icons">search</i></a>' +
+                                '<a class="btn" onclick="deleteQuery(\'' + item.id + '\')"><i class="material-icons">delete</i></a>' +
+                                '<span id="query_' + item.id + '">' + item.query + '</span>' +
+                                '</li>'
+                            )
+                        }
                     });
                 }
             });
@@ -239,6 +248,8 @@
         // Helper method that handles initialization and updating datatable.
         function constructTable(data) {
 
+            $('#caption').text('');
+
             let tableColumns = [];
             let tableRows = [];
 
@@ -264,7 +275,6 @@
             if ($.fn.dataTable.isDataTable('#example')) {
                 tableSelector.DataTable().clear().destroy();
                 tableSelector.empty();
-                $('#caption').text('');
             }
 
             if (tableRows.length != 0) {
@@ -277,10 +287,6 @@
                     data: tableRows,
                     dom: 'Bfrtip',
                     buttons: ['colvis'],
-                    deferRender: true,
-                    scrollY: "500px",
-                    scrollCollapse: true,
-                    scroller: true
                 });
 
                 // Double click event listener on cells.
