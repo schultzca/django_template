@@ -77,16 +77,21 @@
     <script>
         $(document).ready(function () {
             $('select').formSelect();
-            $('.collapsible').collapsible();
+            $('form').submit(function () {
+                return false;
+            });  // Prevent page from being refreshed by pressing enter.
         });
     </script>
 
     <script>
+
+        // Set callback for updating list of indices when Elasticsearch instance is selected.
         $('.elastic-instance').change(function () {
             let instance = $('.elastic-instance option:selected').val();
             getElasticIndices(instance);
         });
 
+        // Update index dropdown with indices associated with elastic instance.
         function getElasticIndices(instance) {
             $.ajax({
                 url: '/ajax/indices/',
@@ -96,19 +101,19 @@
                 },
                 dataType: 'json',
                 success: function (data) {
-                    let indices = {};
-                    for (index_name in data.indices) {
-                        indices[index_name] = index_name;
-                    }
+                    let indices = [];
+                    Object.keys(data.indices).sort().forEach(item => indices.push({"value": item, "text": item}));
                     updateSelect($('.elastic-index'), indices);
                 }
             });
         }
 
+        // Set call back for updating list of indices when TagSet is selected.
         $('.tag-set').change(function () {
             populateTags();
         });
 
+        // Update tag dropdown with tags associated with tagset.
         function populateTags() {
             let tagSetID = $('.tag-set option:selected').val();
             $.ajax({
@@ -119,8 +124,8 @@
                 },
                 dataType: 'json',
                 success: function (data) {
-                    let tags = {}
-                    data.forEach(item => tags[item.id] = item.name);
+                    let tags = [];
+                    data.forEach(item => tags.push({"value": item.id, "text": item.name.split("_").join(" - ")}));
                     updateSelect($('.tag-list'), tags);
                 }
             }).always(function () {
@@ -129,20 +134,22 @@
         }
 
         // Helper method to update select elements options.
-        function updateSelect(selector, options, duplicate_val) {
+        function updateSelect(selector, options) {
             selector.find('option:not(:first)').remove();
-            $.each(options, function(val, text) {
+            options.forEach(option => {
                 selector.append(
-                    $('<option class="left"></option>').val(val).html(text)
+                    $('<option class="left"></option>').val(option.value).html(option.text)
                 )
             });
             $('select').formSelect()
         }
 
+        // Set callback for updating list of queries displayed when a tag is selected.
         $('.tag-list').change(function () {
             populateQueries();
         });
 
+        // Update collection of queries when associated tag is selected.
         function populateQueries() {
             let tagID = $('.tag-list option:selected').val();
             $.ajax({
@@ -159,9 +166,9 @@
                         console.log(item.read_only);
                         querySelector.append(
                             '<li class="collection-item">' +
-                                '<a class="btn" onclick="searchIndex(\'query_' + item.id + '\')"><i class="material-icons">search</i></a>' +
-                                '<a class="btn" onclick="deleteQuery(\'' + item.id + '\')"><i class="material-icons">delete</i></a>' +
-                                '<span id="query_' + item.id + '">' + item.query + '</span>' +
+                            '<a class="btn" onclick="searchIndex(\'query_' + item.id + '\')"><i class="material-icons">search</i></a>' +
+                            '<a class="btn" onclick="deleteQuery(\'' + item.id + '\')"><i class="material-icons">delete</i></a>' +
+                            '<span id="query_' + item.id + '">' + item.query + '</span>' +
                             '</li>'
                         )
                     });
@@ -169,6 +176,7 @@
             });
         }
 
+        // Ajax call to create a query in the database.
         function createQuery(text_id) {
             let textSelector = $('#' + text_id);
             let tagID = $('.tag-list option:selected').val();
@@ -186,6 +194,7 @@
             });
         }
 
+        // Ajax call to delete a query from the database.
         function deleteQuery(query_id) {
             $.ajax({
                 url: '/ajax/delete_query/',
@@ -200,6 +209,7 @@
 
         }
 
+        // Execute query against selected Elasticsearch instance and indexm, displaying results in datatable.
         function searchIndex(text_id) {
             let textSelector = $('#' + text_id);
             let queryString = ((textSelector.val() != "") ? textSelector.val() : textSelector.text());
@@ -207,9 +217,9 @@
                 url: '/ajax/search/',
                 type: 'GET',
                 data: {
-                   'instance': $('.elastic-instance').val(),
-                   'index': $('.elastic-index').val(),
-                   'query_string': queryString
+                    'instance': $('.elastic-instance').val(),
+                    'index': $('.elastic-index').val(),
+                    'query_string': queryString
                 },
                 dataType: 'json',
                 success: function (data) {
@@ -218,6 +228,7 @@
             });
         }
 
+        // Helper method that handles initialization and updating datatable.
         function constructTable(data) {
 
             let setHeader = true;
@@ -235,8 +246,9 @@
             let tableSelector = $('#example');
 
             // Clear and destroy existing DataTable.
-            if ($.fn.DataTable.isDataTable('#example')) {
+            if ($.fn.dataTable.isDataTable('#example')) {
                 tableSelector.DataTable().clear().destroy();
+                tableSelector.empty();
             }
 
             if (tableRows.length != 0) {
@@ -244,8 +256,9 @@
                 tableSelector.DataTable({
                     columns: tableColumns,
                     data: tableRows,
-                    ordering
-                })
+                    dom: 'Bfrtip',
+                    buttons: ['colvis']
+                });
             }
         }
     </script>
