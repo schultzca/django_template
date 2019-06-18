@@ -320,3 +320,5 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+# Ignore static files
+staticfiles
